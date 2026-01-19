@@ -113,22 +113,61 @@ exports.getAllSubjectsAndYears = async (req, res) => {
   }
 };
 
-// exports.getAllSubjectsAndYears = async (req, res) => {
-//   try {
-//     const data = await Question.aggregate([
-//       {
-//         $group: {
-//           _id: "$subject",
-//           // Change $first to $addToSet so you get ALL exam types for this subject
-//           examType: { $addToSet: "$examType" }, 
-//           years: { $addToSet: "$examYear" }
-//         }
-//       },
-//       { $sort: { _id: 1 } }
-//     ]);
+exports.bulkUpdateQuestions = async (req, res) => {
+  try {
+    const { updates } = req.body;
 
-//     res.status(200).json(data);
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ error: "Updates array is required" });
+    }
+
+    const operations = updates.map(({ _id, ...fields }) => {
+      if (!_id) return null;
+
+      return {
+        updateOne: {
+          filter: { _id },
+          update: { $set: fields }
+        }
+      };
+    }).filter(Boolean);
+
+    const result = await Question.bulkWrite(operations, {
+      ordered: false // continues even if one fails
+    });
+
+    res.status(200).json({
+      message: "Bulk update completed",
+      matched: result.matchedCount,
+      modified: result.modifiedCount
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// @desc    Delete multiple questions by ID
+// @route   DELETE /api/questions/bulk
+exports.bulkDeleteQuestions = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    // Validation
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        error: "ids must be a non-empty array"
+      });
+    }
+
+    const result = await Question.deleteMany({
+      _id: { $in: ids }
+    });
+
+    res.status(200).json({
+      message: "Bulk delete completed",
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
