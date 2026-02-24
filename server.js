@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const questionRoutes = require('./routes/questionRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Load config
 dotenv.config();
@@ -18,6 +19,7 @@ app.use(cors()); // Allows frontend to communicate with backend
 
 // Routes
 app.use('/api/questions', questionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 const PORT = process.env.PORT || 5000;
 
