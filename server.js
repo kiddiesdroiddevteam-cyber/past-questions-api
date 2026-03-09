@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const questionRoutes = require('./routes/questionRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const parseRoute = require('./routes/upload');
 
 // Load config
 dotenv.config();
@@ -17,9 +18,11 @@ const app = express();
 app.use(express.json()); // Allows us to accept JSON data in body
 app.use(cors()); // Allows frontend to communicate with backend
 
+
 // Routes
 app.use('/api/questions', questionRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/parse', parseRoute);
 
 const PORT = process.env.PORT || 5000;
 
