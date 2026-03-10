@@ -2,25 +2,6 @@ const Question = require('../models/Question');
 
 // @desc    Add a new past question
 // @route   POST /api/questions
-// exports.addQuestion = async (req, res) => {
-//   try {
-//     const { questionText, options, correctAnswer, examType, examYear, subject } = req.body;
-
-//     const newQuestion = new Question({
-//       questionText,
-//       options,
-//       correctAnswer,
-//       examType,
-//       examYear,
-//       subject
-//     });
-
-//     const savedQuestion = await newQuestion.save();
-//     res.status(201).json(savedQuestion);
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
 
 exports.addQuestion = async (req, res) => {
   try {
