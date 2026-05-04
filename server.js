@@ -37,15 +37,23 @@ app.post('/api/pay', async (req, res) => {
   }
 })
 
-app.post("/api/webhook/url", function(req, res) {
-    //validate event
-    const hash = crypto.createHmac('sha512', secret).update(JSON.stringify(req.body)).digest('hex');
-    if (hash == req.headers['x-paystack-signature']) {
-    // Retrieve the request's body
+app.post("/api/webhook/url", function (req, res) {
+  const hash = crypto
+    .createHmac('sha512', process.env.SECRET_KEY)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+
+  if (hash === req.headers['x-paystack-signature']) {
     const event = req.body;
-     console.log('event', event);
+    console.log('event', event);
+
+    // handle events here
+    if (event.event === 'charge.success') {
+      console.log('Payment successful!');
     }
-    res.send(200);
+  }
+
+  res.sendStatus(200);
 });
 
 const PORT = process.env.PORT || 5000;
