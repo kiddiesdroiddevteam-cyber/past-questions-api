@@ -6,6 +6,7 @@ const questionRoutes = require('./routes/questionRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const parseRoute = require('./routes/upload');
 const { initializeTransaction } = require('./paystack');
+const crypto = require('crypto');
 
 // Load config
 dotenv.config();
