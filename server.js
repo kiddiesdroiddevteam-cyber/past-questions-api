@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const questionRoutes = require('./routes/questionRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const parseRoute = require('./routes/upload');
+const { initializeTransaction } = require('./paystack');
 
 // Load config
 dotenv.config();
@@ -23,6 +24,29 @@ app.use(cors()); // Allows frontend to communicate with backend
 app.use('/api/questions', questionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/parse', parseRoute);
+app.post('/api/pay', async (req, res) => {
+  try {
+    const { email, amount } = req.body;
+
+    const response = await initializeTransaction({ email, amount });
+
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Payment initialization failed' });
+  }
+})
+
+app.post("/api/webhook/url", function(req, res) {
+    //validate event
+    const hash = crypto.createHmac('sha512', secret).update(JSON.stringify(req.body)).digest('hex');
+    if (hash == req.headers['x-paystack-signature']) {
+    // Retrieve the request's body
+    const event = req.body;
+     console.log('event', event);
+    }
+    res.send(200);
+});
 
 const PORT = process.env.PORT || 5000;
 

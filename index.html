@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Testing Paystack</title>
+</head>
+<body>
+  <p>Hiiiii</p>
+
+  <form> 
+    <input type="hidden" name="email" value="customer@email.com"> 
+    <input type="hidden" name="amount" value="500000"> 
+    <input type="hidden" name="cartid" value="12345"> 
+    <button type="submit" id="pay-btn">Pay now</button>
+  </form>
+  <script>
+    document.getElementById('pay-btn').addEventListener('click', async (e) => {
+        console.log("Hi clickedd")
+        e.preventDefault();
+      try {
+        const res = await fetch('http://localhost:5000/api/pay', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: 'customer@email.com',
+            amount: 500000,
+            cartId: 12
+          })
+        });
+
+        const data = await res.json();
+        console.log('data',data);
+
+        // 🔥 Redirect to Paystack
+        window.location.href = data.data.authorization_url;
+
+      } catch (err) {
+        console.error(err);
+        alert('Payment failed');
+      }
+    });
+  </script>
+</body>
+</html>
