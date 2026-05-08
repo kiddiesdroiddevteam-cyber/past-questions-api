@@ -38,19 +38,70 @@ app.post('/api/pay', async (req, res) => {
   }
 })
 
-app.post("/api/webhook/url", function (req, res) {
+// app.post("/api/webhook/url", function (req, res) {
+//   const hash = crypto
+//     .createHmac('sha512', process.env.SECRET_KEY)
+//     .update(JSON.stringify(req.body))
+//     .digest('hex');
+
+//   if (hash === req.headers['x-paystack-signature']) {
+//     const event = req.body;
+//     console.log('event', event);
+
+//     // handle events here
+//     if (event.event === 'charge.success') {
+//       console.log('Payment successful!');
+//     }
+//   }
+
+//   res.sendStatus(200);
+// });
+
+app.post("/api/webhook/url", async function (req, res) {
+
   const hash = crypto
     .createHmac('sha512', process.env.SECRET_KEY)
     .update(JSON.stringify(req.body))
     .digest('hex');
 
   if (hash === req.headers['x-paystack-signature']) {
-    const event = req.body;
-    console.log('event', event);
 
-    // handle events here
+    const event = req.body;
+
     if (event.event === 'charge.success') {
-      console.log('Payment successful!');
+
+      const reference = event.data.reference;
+
+      try {
+
+        // VERIFY PAYMENT
+        const response = await axios.get(
+          `https://api.paystack.co/transaction/verify/${reference}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.SECRET_KEY}`,
+            },
+          }
+        );
+
+        const paymentData = response.data.data;
+
+        // CONFIRM PAYMENT REALLY SUCCEEDED
+        if (paymentData.status === 'success') {
+
+          // VERY IMPORTANT:
+          // Check database so you don't process twice
+
+          console.log('Verified payment success');
+
+          // Give user value here
+          // e.g wallet funding, exam access, etc
+
+        }
+
+      } catch (error) {
+        console.log(error.message);
+      }
     }
   }
 
