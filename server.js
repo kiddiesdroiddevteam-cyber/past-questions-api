@@ -45,7 +45,7 @@ const verifyPayment = async (reference) => {
         `https://api.paystack.co/transaction/verify/${reference}`,
         {
             headers: {
-                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`, // Ensure this is in your .env
+                Authorization: `Bearer ${process.env.SECRET_KEY}`, // Ensure this is in your .env
             },
         }
     );
@@ -57,7 +57,7 @@ app.post('/api/webhook/url', async (req, res) => {
     try {
         // VERIFY SIGNATURE
         const hash = crypto
-            .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY) // Use your Secret Key
+            .createHmac('sha512', process.env.SECRET_KEY) // Use your Secret Key
             .update(JSON.stringify(req.body))
             .digest('hex');
 
