@@ -68,11 +68,12 @@ app.post("/api/webhook/url", async function (req, res) {
   if (hash === req.headers['x-paystack-signature']) {
 
     const event = req.body;
+    console.log('event', event)
 
     if (event.event === 'charge.success') {
 
       const reference = event.data.reference;
-
+      console.log('reference', reference);
       try {
 
         // VERIFY PAYMENT
