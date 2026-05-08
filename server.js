@@ -77,7 +77,7 @@ app.post('/api/webhook/url', async (req, res) => {
             
             // OPTIONAL: Double check with Paystack API
             const paymentData = await verifyPayment(reference);
-
+            console.log('payment data', paymentData);
             if (paymentData.status === 'success') {
                 console.log('Payment verified for:', reference);
                 
