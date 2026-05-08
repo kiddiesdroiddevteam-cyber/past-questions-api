@@ -74,7 +74,7 @@ app.post('/api/webhook/url', async (req, res) => {
         // Only process successful charges
         if (event.event === 'charge.success') {
             const reference = event.data.reference;
-            
+            console.log('reference', reference);
             // OPTIONAL: Double check with Paystack API
             const paymentData = await verifyPayment(reference);
             console.log('payment data', paymentData);
