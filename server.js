@@ -1,13 +1,13 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const crypto = require('crypto');
+const axios = require('axios');
 const connectDB = require('./config/db');
 const questionRoutes = require('./routes/questionRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const parseRoute = require('./routes/upload');
 const { initializeTransaction } = require('./paystack');
-const crypto = require('crypto');
-const axios = require('axios');
 
 // Load config
 dotenv.config();
@@ -18,99 +18,84 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(express.json()); // Allows us to accept JSON data in body
-app.use(cors()); // Allows frontend to communicate with backend
-
+app.use(express.json()); 
+app.use(cors());
 
 // Routes
 app.use('/api/questions', questionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/parse', parseRoute);
+
+// 1. Initialize Payment Route
 app.post('/api/pay', async (req, res) => {
-  try {
-    const { email, amount } = req.body;
-
-    const response = await initializeTransaction({ email, amount });
-
-    res.json(response);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Payment initialization failed' });
-  }
-})
-
-// app.post("/api/webhook/url", function (req, res) {
-//   const hash = crypto
-//     .createHmac('sha512', process.env.SECRET_KEY)
-//     .update(JSON.stringify(req.body))
-//     .digest('hex');
-
-//   if (hash === req.headers['x-paystack-signature']) {
-//     const event = req.body;
-//     console.log('event', event);
-
-//     // handle events here
-//     if (event.event === 'charge.success') {
-//       console.log('Payment successful!');
-//     }
-//   }
-
-//   res.sendStatus(200);
-// });
-
-app.post("/api/webhook/url", async function (req, res) {
-
-  const hash = crypto
-    .createHmac('sha512', process.env.SECRET_KEY)
-    .update(JSON.stringify(req.body))
-    .digest('hex');
-
-  if (hash === req.headers['x-paystack-signature']) {
-
-    const event = req.body;
-    console.log('event', event)
-
-    if (event.event === 'charge.success') {
-
-      const reference = event.data.reference;
-      console.log('reference', reference);
-      try {
-
-        // VERIFY PAYMENT
-        const response = await axios.get(
-          `https://api.paystack.co/transaction/verify/${reference}`,
-          {
-            headers: {
-              Authorization: `Bearer sk_test_cb2d724215d3bae79c7e814846289653dc9f3d98`,
-            },
-          }
-        );
-        console.log("response", response);
-
-        const paymentData = response.data.data;
-
-        // CONFIRM PAYMENT REALLY SUCCEEDED
-        if (paymentData.status === 'success') {
-
-          // VERY IMPORTANT:
-          // Check database so you don't process twice
-
-          console.log('Verified payment success');
-
-          // Give user value here
-          // e.g wallet funding, exam access, etc
-
-        }
-
-      } catch (error) {
-        console.log(error.message);
-      }
+    try {
+        const { email, amount } = req.body;
+        // Ensure initializeTransaction is correctly exported from your paystack.js
+        const response = await initializeTransaction({ email, amount });
+        res.json(response);
+    } catch (error) {
+        console.error('Payment Init Error:', error.message);
+        res.status(500).json({ error: 'Payment initialization failed' });
     }
-  }
-
-  res.sendStatus(200);
 });
 
-const PORT = process.env.PORT || 5000;
+// 2. Helper function to verify payment via Paystack API
+const verifyPayment = async (reference) => {
+    const response = await axios.get(
+        `https://api.paystack.co/transaction/verify/${reference}`,
+        {
+            headers: {
+                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`, // Ensure this is in your .env
+            },
+        }
+    );
+    return response.data.data;
+};
 
+// 3. Webhook Route
+app.post('/api/webhook/url', async (req, res) => {
+    try {
+        // VERIFY SIGNATURE
+        const hash = crypto
+            .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY) // Use your Secret Key
+            .update(JSON.stringify(req.body))
+            .digest('hex');
+
+        if (hash !== req.headers['x-paystack-signature']) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid signature',
+            });
+        }
+
+        const event = req.body;
+        console.log('Webhook Event Received:', event.event);
+
+        // Only process successful charges
+        if (event.event === 'charge.success') {
+            const reference = event.data.reference;
+            
+            // OPTIONAL: Double check with Paystack API
+            const paymentData = await verifyPayment(reference);
+
+            if (paymentData.status === 'success') {
+                console.log('Payment verified for:', reference);
+                
+                // TODO: UPDATE YOUR DATABASE HERE
+                // Example: await User.findOneAndUpdate({email: paymentData.customer.email}, {plan: 'premium'})
+
+                return res.status(200).send('Webhook Processed');
+            }
+        }
+
+        // Return 200 to Paystack to stop retries even if it's an event you don't handle
+        res.status(200).send('Event ignored');
+
+    } catch (error) {
+        console.error('Webhook Error:', error.response?.data || error.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+}); // Fixed missing closing bracket here
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
