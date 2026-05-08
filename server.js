@@ -7,6 +7,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const parseRoute = require('./routes/upload');
 const { initializeTransaction } = require('./paystack');
 const crypto = require('crypto');
+const axios = require('axios');
 
 // Load config
 dotenv.config();
