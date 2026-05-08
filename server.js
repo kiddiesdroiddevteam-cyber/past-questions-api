@@ -81,7 +81,7 @@ app.post("/api/webhook/url", async function (req, res) {
           `https://api.paystack.co/transaction/verify/${reference}`,
           {
             headers: {
-              Authorization: `Bearer ${process.env.SECRET_KEY}`,
+              Authorization: `Bearer sk_test_cb2d724215d3bae79c7e814846289653dc9f3d98`,
             },
           }
         );
