@@ -9,7 +9,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const parseRoute = require('./routes/upload');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const { initializeTransaction } = require('./paystack');
-const { supabase } = require('./supabase/supabaseClient');
+const supabase = require('./supabase/supabaseClient');
 
 // Load config
 dotenv.config();

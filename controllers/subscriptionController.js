@@ -1,4 +1,3 @@
-const { supabase } = require('../supabase/supabaseClient');
 const {
   initializeTransaction,
   createSubscription,
@@ -6,6 +5,7 @@ const {
   cancelSubscription,
   updateSubscription
 } = require('../paystack');
+const supabase = require('../supabase/supabaseClient');
 
 // Initialize a subscription (start with 14-day trial)
 async function initializeSubscription(req, res) {
@@ -18,7 +18,7 @@ async function initializeSubscription(req, res) {
         message: 'Missing required fields: email, plan, plan_code, userId' 
       });
     }
-
+   console.log('Initializing subscription for user:', userId, 'with plan:', plan);
     // Check if user already has active subscription
     const { data: existingSub, error: fetchError } = await supabase
       .from('subscriptions')
